@@ -1,8 +1,9 @@
-from .client import TestHttpClient
-from .base import BaseTestCase, async
+from .base import *
+from .client import *
 
 __all__ = [
     'async',
     'BaseTestCase',
+    'override_settings',
     'TestHttpClient',
 ]

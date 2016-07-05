@@ -51,17 +51,21 @@ class ResponseParser:
 
 
 class TestHttpClient:
+    peername = ('127.0.0.1', '12345')
 
-    def __init__(self, app):
+
+    def __init__(self, app, peername=None):
         self.app = app
         self.async = False
+        if peername:
+            self.peername = peername
 
     def _request(self, method, path, *, body=None, headers=None):
         request_factory = self.app.make_handler()
         handler = request_factory()
         tr = mock.Mock()
         extra_info = {
-            'peername': ('localhost', 8000),
+            'peername': self.peername,
             'socket': mock.MagicMock(),
         }
         tr.get_extra_info = mock.Mock(side_effect=extra_info.get)
@@ -76,7 +80,8 @@ class TestHttpClient:
         if headers:
             _headers.update(headers)
             for k, v in headers.items():
-                _raw_headers.append((bytes(k), bytes(v)))
+                _raw_headers.append(
+                    (bytes(k, encoding='ascii'), bytes(v, encoding='ascii')))
         msg = protocol.RawRequestMessage(
                 method, path, protocol.HttpVersion10, _headers, _raw_headers,
                 should_close=True, compression=None)
@@ -96,7 +101,7 @@ class TestHttpClient:
 
     # noinspection PyUnusedLocal
     def request(self, method, path, *, body=None, headers=None):
-        coro = self._request(method, path, body=None, headers=None)
+        coro = self._request(method, path, body=body, headers=headers)
         if self.async:
             return coro
         else:
