@@ -29,6 +29,11 @@ class BaseTestCase(TestCase):
         self._mocks[args[0]] = patcher.start()
         self._patchers[args[0]] = patcher
 
+    def mock_object(self, *args, **kwargs):
+        patcher = mock.patch.object(*args, **kwargs)
+        self._mocks[args[0]] = patcher.start()
+        self._patchers[args[0]] = patcher
+
     def get_mock(self, name):
         return self._mocks[name]
 
