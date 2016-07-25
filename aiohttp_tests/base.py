@@ -24,6 +24,12 @@ class BaseTestCase(TestCase):
         result.set_result(value)
         return result
 
+    def finished_coroutine(self, value=None):
+        @asyncio.coroutine
+        def coro(*args, **kwargs):
+            return value
+        return coro
+
     def mock(self, *args, **kwargs):
         patcher = mock.patch(*args, **kwargs)
         self._mocks[args[0]] = patcher.start()

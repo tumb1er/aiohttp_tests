@@ -60,6 +60,7 @@ class TestHttpClient:
             self.peername = peername
 
     def _request(self, method, path, *, body=None, headers=None):
+        headers = headers or {}
         request_factory = self.app.make_handler()
         handler = request_factory()
         tr = mock.Mock()
@@ -76,6 +77,10 @@ class TestHttpClient:
         _raw_headers = [
             (b'Host', b'localhost')
         ]
+
+        if body is not None:
+            headers.setdefault('CONTENT-LENGTH', str(len(body)))
+
         if headers:
             _headers.update(headers)
             for k, v in headers.items():
