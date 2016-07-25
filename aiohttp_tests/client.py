@@ -4,9 +4,8 @@ import http.cookies
 from unittest import mock
 from urllib.parse import urlencode
 
-from aiohttp import protocol, StreamReader, parsers, web
+from aiohttp import protocol, StreamReader, parsers, web, CIMultiDict
 from aiohttp.client_reqrep import hdrs
-from aiohttp.multidict import CIMultiDict
 
 
 class ResponseParser:
