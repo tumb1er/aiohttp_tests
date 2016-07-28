@@ -96,7 +96,7 @@ class override_settings(object):
         return self.decorate_callable(decorated)
 
     def decorate_class(self, klass):
-        for attr in klass.__dict__:
+        for attr in dir(klass):
             if not attr.startswith('test'):
                 continue
             if callable(getattr(klass, attr)):
