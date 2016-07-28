@@ -80,6 +80,8 @@ class TestHttpClient:
 
         if body is not None:
             headers.setdefault('CONTENT-LENGTH', str(len(body)))
+            if not isinstance(body, bytes):
+                body = bytes(body, encoding='utf-8')
 
         if headers:
             _headers.update(headers)
