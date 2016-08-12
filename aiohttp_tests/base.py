@@ -88,16 +88,23 @@ def async_test(what):
     if inspect.isclass(what):
         for k in dir(what):
             func = getattr(what, k)
+            if not k.startswith('test'):
+                continue
+            if not (callable(func) and asyncio.iscoroutinefunction(func)):
+                continue
 
-            if callable(func) and asyncio.iscoroutinefunction(func):
+            def get_wrapper(func):
                 @wraps(func)
-                def wrapper(self, *args,**kwargs):
+                def wrapper(self, *args, **kwargs):
+                    if func.__name__ != self._testMethodName:
+                        raise RuntimeError("testee mismatch")
                     if hasattr(self, 'client'):
                         self.client.async = True
 
                     self.loop.run_until_complete(func(self, *args,**kwargs))
+                return wrapper
 
-                setattr(what, k, wrapper)
+            setattr(what, k, get_wrapper(func))
         return what
 
     else:
