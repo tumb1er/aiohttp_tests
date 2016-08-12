@@ -1,4 +1,6 @@
 # coding: utf-8
+import inspect
+
 import asyncio
 import collections
 from functools import wraps
@@ -67,17 +69,42 @@ class BaseTestCase(TestCase):
         raise NotImplementedError()
 
 
-def async(test_method):
-    """
-    :param test_method: тест, который нужно вызывать асинхронно
-    :type test_method: asyncio.coroutine
-    """
+def async_test(what):
+    """ replaces all coroutines in a 'what' class, or 'what' callable itself
+    with sync method that uses run_until_complete to execute coroutine
 
-    @wraps(test_method)
-    def inner(self, *args, **kwargs):
-        self.client.async = True
-        self.loop.run_until_complete(test_method(self, *args, **kwargs))
-    return inner
+    >>> async_test(SomeTestCase)
+    <class 'SomeTestCase'>
+
+    >>> class SomeTestCase(TestCase):
+    >>>     @async_test
+    >>>     async def testAny(self):
+    >>>         await asyncio.sleep(1)
+    >>>
+    >>> asyncio.iscoroutinefunction(SomeTestCase.testAny)
+    False
+
+    """
+    if inspect.isclass(what):
+        for k in dir(what):
+            func = getattr(what, k)
+
+            if callable(func) and asyncio.iscoroutinefunction(func):
+                @wraps(func)
+                def wrapper(self, *args,**kwargs):
+                    if hasattr(self, 'client'):
+                        self.client.async = True
+
+                    self.loop.run_until_complete(func(self, *args,**kwargs))
+
+                setattr(what, k, wrapper)
+        return what
+
+    else:
+        @wraps(what)
+        def wrapper(self):
+            self.loop.run_until_complete(what(self))
+    return wrapper
 
 
 class override_settings(object):
