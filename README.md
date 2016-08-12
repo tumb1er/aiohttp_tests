@@ -83,7 +83,7 @@ class ExampleTestCase(at.BaseTestCase):
         response = self.client.request('PUT', '/', data={'field': 'value'})
         self.assertEqual(response.status, 405)
 
-    @at.async
+    @at.async_test
     def testAsyncClient(self):
         """ test client requests could be done async, if needed."""
 
