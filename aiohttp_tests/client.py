@@ -103,6 +103,10 @@ class TestHttpClient:
 
         response_parser = ResponseParser(buffer)
         response = yield from response_parser()
+        if not response.body and data:
+            # aiohttp does not read response body without content-length and
+            # chunked encoding
+            response._body = bytes(buffer._data)
         handler.connection_lost(None)
         return response
 
