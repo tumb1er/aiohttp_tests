@@ -6,6 +6,7 @@ from urllib.parse import urlencode
 
 from aiohttp import protocol, StreamReader, parsers, web, CIMultiDict
 from aiohttp.client_reqrep import hdrs
+from aiohttp.streams import EmptyStreamReader
 
 
 class ResponseParser:
@@ -92,9 +93,12 @@ class TestHttpClient:
         msg = protocol.RawRequestMessage(
                 method, path, protocol.HttpVersion10, _headers, _raw_headers,
                 should_close=True, compression=None)
-        payload = StreamReader(loop=self.app.loop)
-        payload.feed_data(body)
-        payload.feed_eof()
+        if body:
+            payload = StreamReader(loop=self.app.loop)
+            payload.feed_data(body)
+            payload.feed_eof()
+        else:
+            payload = EmptyStreamReader()
         yield from handler.handle_request(msg, payload)
 
         data = b''.join(call[0][0] for call in tr.write.call_args_list)
