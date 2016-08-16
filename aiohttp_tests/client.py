@@ -1,5 +1,5 @@
 # coding: utf-8
-# coding: utf-8
+import asyncio
 import http.cookies
 from unittest import mock
 from urllib.parse import urlencode
@@ -15,6 +15,7 @@ class ResponseParser:
     def __init__(self, buffer):
         self.buffer = buffer
         self.message = self.response = self.feed_data = None
+        self.eof_found = False
 
     # noinspection PyUnusedLocal
     def parse_http_message(self, message, length):
@@ -36,22 +37,21 @@ class ResponseParser:
         self.response.body += content
 
     def feed_eof(self):
-        pass
+        self.eof_found = True
 
     def __call__(self):
         parser = protocol.HttpResponseParser()
         self.feed_data = self.parse_http_message
         yield from parser(self, self.buffer)
-
-        parser = protocol.HttpPayloadParser(self.message)
-        self.feed_data = self.parse_http_content
-        yield from parser(self, self.buffer)
+        if not self.eof_found:
+            parser = protocol.HttpPayloadParser(self.message)
+            self.feed_data = self.parse_http_content
+            yield from parser(self, self.buffer)
         return self.response
 
 
 class TestHttpClient:
     peername = ('127.0.0.1', '12345')
-
 
     def __init__(self, app, peername=None):
         self.app = app
@@ -59,6 +59,7 @@ class TestHttpClient:
         if peername:
             self.peername = peername
 
+    @asyncio.coroutine
     def _request(self, method, path, *, body=None, headers=None):
         headers = headers or {}
         request_factory = self.app.make_handler()
