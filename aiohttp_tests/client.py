@@ -43,7 +43,7 @@ class ResponseParser:
         parser = protocol.HttpResponseParser()
         self.feed_data = self.parse_http_message
         yield from parser(self, self.buffer)
-        if not self.eof_found:
+        if not self.eof_found or self.buffer:
             parser = protocol.HttpPayloadParser(self.message)
             self.feed_data = self.parse_http_content
             yield from parser(self, self.buffer)
