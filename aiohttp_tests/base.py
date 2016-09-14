@@ -58,7 +58,8 @@ class BaseTestCase(TestCase):
                 p.stop()
 
     def cleanup_app(self):
-        self.loop.run_until_complete(self.app.cleanup())
+        if self.app:
+            self.loop.run_until_complete(self.app.cleanup())
 
     def _start_patchers(self):
         self._patchers = collections.OrderedDict()
@@ -109,8 +110,8 @@ def async_test(what):
 
     else:
         @wraps(what)
-        def wrapper(self):
-            self.loop.run_until_complete(what(self))
+        def wrapper(self, *args, **kwargs):
+            self.loop.run_until_complete(what(self, *args, **kwargs))
     return wrapper
 
 
