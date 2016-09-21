@@ -2,7 +2,7 @@ from .base import *
 from .client import *
 
 __all__ = [
-    'async_test',
+    'run_async',
     'BaseTestCase',
     'override_settings',
     'TestHttpClient',

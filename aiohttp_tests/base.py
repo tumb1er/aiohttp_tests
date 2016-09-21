@@ -70,15 +70,15 @@ class BaseTestCase(TestCase):
         raise NotImplementedError()
 
 
-def async_test(what):
+def run_async(what):
     """ replaces all coroutines in a 'what' class, or 'what' callable itself
     with sync method that uses run_until_complete to execute coroutine
 
-    >>> async_test(SomeTestCase)
+    >>> run_async(SomeTestCase)
     <class 'SomeTestCase'>
 
     >>> class SomeTestCase(TestCase):
-    >>>     @async_test
+    >>>     @run_async
     >>>     async def testAny(self):
     >>>         await asyncio.sleep(1)
     >>>
