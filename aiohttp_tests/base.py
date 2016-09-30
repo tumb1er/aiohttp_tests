@@ -111,6 +111,8 @@ def run_async(what):
     else:
         @wraps(what)
         def wrapper(self, *args, **kwargs):
+            if hasattr(self, 'client'):
+                self.client.async = True
             self.loop.run_until_complete(what(self, *args, **kwargs))
     return wrapper
 
