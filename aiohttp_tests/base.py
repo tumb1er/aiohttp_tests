@@ -26,9 +26,12 @@ class BaseTestCase(TestCase):
         result.set_result(value)
         return result
 
-    def finished_coroutine(self, value=None):
+    @staticmethod
+    def finished_coroutine(value=None, side_effect=None):
         @asyncio.coroutine
         def coro(*args, **kwargs):
+            if side_effect:
+                side_effect(*args, **kwargs)
             return value
         return coro
 
@@ -60,6 +63,7 @@ class BaseTestCase(TestCase):
     def cleanup_app(self):
         if self.app:
             self.loop.run_until_complete(self.app.cleanup())
+            self.loop.run_until_complete(self.app.shutdown())
 
     def _start_patchers(self):
         self._patchers = collections.OrderedDict()
