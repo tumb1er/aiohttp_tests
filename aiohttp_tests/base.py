@@ -35,15 +35,19 @@ class BaseTestCase(TestCase):
             return value
         return coro
 
-    def mock(self, *args, **kwargs):
-        patcher = mock.patch(*args, **kwargs)
-        self._mocks[args[0]] = patcher.start()
-        self._patchers[args[0]] = patcher
+    def mock(self, name, *args, **kwargs):
+        patcher = mock.patch(name, *args, **kwargs)
+        if name in self._patchers:
+            self._patchers[name].stop()
+        self._mocks[name] = patcher.start()
+        self._patchers[name] = patcher
 
-    def mock_object(self, *args, **kwargs):
-        patcher = mock.patch.object(*args, **kwargs)
-        self._mocks[args[0]] = patcher.start()
-        self._patchers[args[0]] = patcher
+    def mock_object(self, name, *args, **kwargs):
+        patcher = mock.patch.object(name, *args, **kwargs)
+        if name in self._patchers:
+            self._patchers[name].stop()
+        self._mocks[name] = patcher.start()
+        self._patchers[name] = patcher
 
     def get_mock(self, name):
         return self._mocks[name]
