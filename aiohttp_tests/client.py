@@ -62,6 +62,8 @@ class TestHttpClient:
 
     @asyncio.coroutine
     def _request(self, method, path, *, body=None, headers=None):
+        if not isinstance(path, str):
+            path = str(path)
         headers = headers or {}
         request_factory = self.app.make_handler()
         handler = request_factory()
