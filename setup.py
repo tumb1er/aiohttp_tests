@@ -17,5 +17,5 @@ setup(
     author_email='zimbler@gmail.com',
     description='unittest helper for aiohttp',
     long_description=read_md('README.md'),
-    requires=['aiohttp>=2.0.7']
+    install_requires=['aiohttp>=2.0.7']
 )
