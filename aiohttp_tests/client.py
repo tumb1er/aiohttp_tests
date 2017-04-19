@@ -1,54 +1,9 @@
 # coding: utf-8
 import asyncio
-import http.cookies
-from unittest import mock
 from urllib.parse import urlencode
 
-from aiohttp import protocol, StreamReader, parsers, web, CIMultiDict
-from aiohttp.client_reqrep import hdrs
-from aiohttp.streams import EmptyStreamReader
-
-
-class ResponseParser:
-    """ Parses byte stream from HttpBuffer.
-    """
-
-    def __init__(self, buffer):
-        self.buffer = buffer
-        self.message = self.response = self.feed_data = None
-        self.eof_found = False
-
-    # noinspection PyUnusedLocal
-    def parse_http_message(self, message, length):
-        """ Parses HTTP headers."""
-        self.message = message
-        self.response = web.Response(reason=message.reason,
-                                     status=message.code,
-                                     headers=message.headers,
-                                     body=b'')
-
-        self.response._cookies = http.cookies.SimpleCookie()
-        if hdrs.SET_COOKIE in message.headers:
-            for hdr in message.headers.getall(hdrs.SET_COOKIE):
-                self.response.cookies.load(hdr)
-
-    # noinspection PyUnusedLocal
-    def parse_http_content(self, content, length):
-        """ Parses response body, dealing with transfer-encodings."""
-        self.response.body += content
-
-    def feed_eof(self):
-        self.eof_found = True
-
-    def __call__(self):
-        parser = protocol.HttpResponseParser()
-        self.feed_data = self.parse_http_message
-        yield from parser(self, self.buffer)
-        if not self.eof_found or self.buffer:
-            parser = protocol.HttpPayloadParser(self.message)
-            self.feed_data = self.parse_http_content
-            yield from parser(self, self.buffer)
-        return self.response
+from aiohttp.test_utils import TestClient
+from multidict import CIMultiDict
 
 
 class TestHttpClient:
@@ -57,6 +12,9 @@ class TestHttpClient:
     def __init__(self, app, peername=None):
         self.app = app
         self.async = False
+        self.loop = asyncio.get_event_loop()
+        self.client = TestClient(app)
+        self.loop.run_until_complete(self.client.start_server())
         if peername:
             self.peername = peername
 
@@ -64,57 +22,24 @@ class TestHttpClient:
     def _request(self, method, path, *, body=None, headers=None):
         if not isinstance(path, str):
             path = str(path)
-        headers = headers or {}
-        request_factory = self.app.make_handler()
-        handler = request_factory()
-        tr = mock.Mock()
-        extra_info = {
-            'peername': self.peername,
-            'socket': mock.MagicMock(),
-        }
-        tr.get_extra_info = mock.Mock(side_effect=extra_info.get)
-        handler.connection_made(tr)
+        headers = CIMultiDict(headers or {})
 
-        _headers = CIMultiDict(
-            HOST='localhost',
-        )
-        _raw_headers = [
-            (b'Host', b'localhost')
-        ]
+        headers.setdefault('HOST', 'localhost')
 
         if body is not None:
             headers.setdefault('CONTENT-LENGTH', str(len(body)))
             if not isinstance(body, bytes):
                 body = bytes(body, encoding='utf-8')
+        resp = yield from self.client.request(method, path, data=body,
+                                              headers=headers)
 
-        if headers:
-            _headers.update(headers)
-            for k, v in headers.items():
-                _raw_headers.append(
-                    (bytes(k, encoding='ascii'), bytes(v, encoding='ascii')))
-        msg = protocol.RawRequestMessage(
-                method, path, protocol.HttpVersion10, _headers, _raw_headers,
-                should_close=True, compression=None)
-        if body:
-            payload = StreamReader(loop=self.app.loop)
-            payload.feed_data(body)
-            payload.feed_eof()
-        else:
-            payload = EmptyStreamReader()
-        yield from handler.handle_request(msg, payload)
-
-        data = b''.join(call[0][0] for call in tr.write.call_args_list)
-
-        buffer = parsers.ParserBuffer(data)
-
-        response_parser = ResponseParser(buffer)
-        response = yield from response_parser()
-        if not response.body and data:
-            # aiohttp does not read response body without content-length and
-            # chunked encoding
-            response._body = bytes(buffer._data)
-        handler.connection_lost(None)
-        return response
+        resp.body = yield from resp.read()
+        try:
+            resp.text = yield from resp.text()
+        except IndexError:
+            # chardet failed
+            pass
+        return resp
 
     # noinspection PyUnusedLocal
     def request(self, method, path, *, body=None, headers=None):
