@@ -27,9 +27,9 @@ class TestHttpClient:
         headers.setdefault('HOST', 'localhost')
 
         if body is not None:
-            headers.setdefault('CONTENT-LENGTH', str(len(body)))
             if not isinstance(body, bytes):
                 body = bytes(body, encoding='utf-8')
+            headers.setdefault('CONTENT-LENGTH', str(len(body)))
         resp = yield from self.client.request(method, path, data=body,
                                               headers=headers)
 
