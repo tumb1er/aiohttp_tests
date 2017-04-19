@@ -19,6 +19,10 @@ class TestHttpClient:
             self.peername = peername
 
     @asyncio.coroutine
+    def close(self):
+        yield from self.client.close()
+
+    @asyncio.coroutine
     def _request(self, method, path, *, body=None, headers=None):
         if not isinstance(path, str):
             path = str(path)
@@ -72,6 +76,3 @@ class TestHttpClient:
         if not body and data:
             body = bytes(urlencode(data), encoding="utf-8")
         return self.request('PATCH', url, body=body, headers=headers)
-
-    def close(self):
-        self.app.loop.run_until_complete(self.app.finish())

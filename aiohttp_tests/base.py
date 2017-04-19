@@ -56,6 +56,7 @@ class BaseTestCase(TestCase):
         return self._patchers[name]
 
     def tearDown(self):
+        self.loop.run_until_complete(self.client.close())
         self.cleanup_app()
         self.loop.stop()
         asyncio.set_event_loop(None)
