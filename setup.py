@@ -9,7 +9,7 @@ except ImportError:
 
 setup(
     name='aiohttp_tests',
-    version='1.0.0',
+    version='1.0.1',
     packages=['aiohttp_tests'],
     url='https://github.com/tumb1er/aiohttp_tests/',
     license='Beer License',
@@ -17,5 +17,5 @@ setup(
     author_email='zimbler@gmail.com',
     description='unittest helper for aiohttp',
     long_description=read_md('README.md'),
-    requires=['aiohttp']
+    requires=['aiohttp>=2.0.7']
 )

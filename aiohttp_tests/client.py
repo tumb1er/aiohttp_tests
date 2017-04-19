@@ -13,7 +13,7 @@ class TestHttpClient:
         self.app = app
         self.async = False
         self.loop = asyncio.get_event_loop()
-        self.client = TestClient(app)
+        self.client = TestClient(app, loop=self.loop)
         self.loop.run_until_complete(self.client.start_server())
         if peername:
             self.peername = peername
