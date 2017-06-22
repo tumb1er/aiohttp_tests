@@ -40,7 +40,7 @@ class TestHttpClient:
         resp.body = yield from resp.read()
         try:
             resp.text = yield from resp.text()
-        except IndexError:
+        except (IndexError, UnicodeDecodeError):
             # chardet failed
             pass
         return resp
